@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="rbcar_pose_topic" value="/amcl_pose" />
+  <arg name="rbcar_desiredpose_topic" value="/next_goal" />
+  <arg name="rbcar_cmdvel_topic" value="/cmd_vel" />
+
+  <arg name="control_period" value="0.1" />
+
+  <arg name="max_speed" value="1.0" />
+  <arg name="max_steering_angle" value="2.7" />
+  <arg name="max_acceleration" value="10.0" />
+
+  <arg name="distance_offset" value="0.1" />
+  <arg name="theta_offset" value="0.2" />
+
+  <arg name="horizon_diskretization" value="10.0"/>
+  <arg name="horizon_length" value="10.0"/>
+
+  <node name="scenario_rbcar_pose_tracking_node" pkg="denmpc" type="scenario_rbcar_pose_tracking_node" output="log">
+    <param name="rbcar_pose_topic" value="$(arg rbcar_pose_topic)"/>
+    <param name="rbcar_desiredpose_topic" value="$(arg rbcar_desiredpose_topic)"/>
+    <param name="rbcar_cmdvel_topic" value="$(arg rbcar_cmdvel_topic)"/>
+
+    <param name="control_period" value="$(arg control_period)"/>
+
+    <param name="max_speed" value="$(arg max_speed)" />
+    <param name="max_steering_angle" value="$(arg max_steering_angle)" />
+    <param name="max_acceleration" value="$(arg max_acceleration)" />
+
+    <param name="distance_offset" value="$(arg distance_offset)" />
+    <param name="theta_offset" value="$(arg theta_offset)" />
+
+    <param name="horizon_diskretization" value="$(arg horizon_diskretization)" />
+    <param name="horizon_length" value="$(arg horizon_length)" />
+  </node>
+
+  <!-- <node name="path_listener" pkg="denmpc" type="path_listener.py" output="log"/> -->
+
+</launch>
