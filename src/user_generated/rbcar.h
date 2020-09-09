@@ -107,7 +107,7 @@ public:
     };
     void subDesiredStateCallback(const geometry_msgs::PoseStamped::ConstPtr &msg)
     {
-        ROS_DEBUG("Desired position is : (%f, %f)\n", msg->pose.position.x, msg->pose.position.y);
+        ROS_INFO("Desired position is : (%f, %f)\n", msg->pose.position.x, msg->pose.position.y);
         std::vector<double> tmp(dim_x_, 0);
 
         tf::Quaternion quat(msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w);
@@ -144,9 +144,9 @@ public:
     };
     void rosPublishActuation()
     {
-        bool enable_actuation; // TODO :: do I really need this?
-        ros::param::get("enable_actuation", enable_actuation);
-        if (goalReached() || !enable_actuation)
+        // bool enable_actuation; // TODO :: do I really need this?
+        // ros::param::get("enable_actuation", enable_actuation);
+        if (goalReached())
             publishZeroCmd();
         else
         {

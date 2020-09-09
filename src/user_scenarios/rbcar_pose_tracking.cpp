@@ -10,16 +10,16 @@
  * Scenario is defining containing int main() and defining the control scenario
  */
 
-#include "Scheduler.h"
-#include "Agent.h"
-#include "Constraint.h"
-#include "Coupling.h"
+#include <Scheduler.h>
+#include <Agent.h>
+#include <Constraint.h>
+#include <Coupling.h>
 
-#include "rbcar.h"
+#include <rbcar.h>
 
-#include "Cmscgmres.h"
-#include "Event.h"
-#include "std_msgs/Bool.h"
+#include <Cmscgmres.h>
+#include <Event.h>
+#include <std_msgs/Bool.h>
 
 int main(int argc, char **argv)
 {
@@ -36,10 +36,10 @@ int main(int argc, char **argv)
 	// rbcar state={x, y, yaw} input={uforward, urotate}
 	double rbcar0_init_p[] = {1.0, 1.0, 1.0, 1.0, 0.5};
 	// Initial desired pose
-	// double rbcar0_init_x[] = {0.0, 0.0, 0.0};
-	// double rbcar0_init_xdes[] = {0.0, 0.0, 0.0};
-	// rbcar0->setInitialState(rbcar0_init_x);
-	// rbcar0->setInitialDesiredState(rbcar0_init_xdes);
+	double rbcar0_init_x[] = {0.0, 0.0, 0.0};
+	double rbcar0_init_xdes[] = {0.0, 0.0, 0.0};
+	rbcar0->setInitialState(rbcar0_init_x);
+	rbcar0->setInitialDesiredState(rbcar0_init_xdes);
 	rbcar0->setInitialParameter(rbcar0_init_p);
 
 	std::string rbcar_pose_topic, rbcar_desiredpose_topic, rbcar_cmdvel_topic;
