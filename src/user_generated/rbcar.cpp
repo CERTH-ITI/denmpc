@@ -32,10 +32,10 @@ Rbcar::Rbcar(int id) : Agent(id)
     max_speed = 1.0;
     max_steering_angle = 0.8;
     max_acceleration = 1.0;
-    previous_speed = 0.0;
-    control_period = 0.01;
-    distance_offset = 0.5;
-    theta_offset = 0.5;
+    // previous_speed = 0.0;
+    // control_period = 0.01;
+    // distance_offset = 0.5;
+    // theta_offset = 0.5;
 
     //Allocate vectors
     x_ = defvector(dim_x_);
@@ -46,6 +46,7 @@ Rbcar::Rbcar(int id) : Agent(id)
     ydes_ = defvector(dim_ydes_);
     d_ = defvector(dim_d_);
     p_ = defvector(dim_p_);
+
     x_init_ = defvector(dim_x_);
     xdes_init_ = defvector(dim_xdes_);
     u_init_ = defvector(dim_u_);
@@ -55,49 +56,35 @@ Rbcar::Rbcar(int id) : Agent(id)
     d_init_ = defvector(dim_d_);
     p_init_ = defvector(dim_p_);
 
-    //Creating control publisher
-    ros::Publisher *pub0 = new ros::Publisher();
-    //Starting Advertising
-    *pub0 = ros_node_.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
-    //Adding publisher to array
-    ros_publishers_.push_back(pub0);
-
-    //Creating subscriber
-    ros::Subscriber *sub0 = new ros::Subscriber();
-
-    //Starting subscription
-    *sub0 = ros_node_.subscribe("/amcl_pose", 1, &Rbcar::subStateCallback, this);
-
-    //Adding subscriber to array
-    ros_state_subscribers_.push_back(sub0);
-
-    //Creating subscriber
-    ros::Subscriber *sub1 = new ros::Subscriber();
-
-    //Starting subscription
-    *sub1 = ros_node_.subscribe("/next_goal", 1, &Rbcar::subDesiredStateCallback, this);
-
-    //Adding subscriber to array
-    ros_desired_state_subscribers_.push_back(sub1);
+    // x_limu_ = defvector(dim_x_);
+    // u_limu_ = defvector(dim_u_);
+    // y_limu_ = defvector(dim_y_);
+    // x_liml_ = defvector(dim_x_);
+    // u_liml_ = defvector(dim_u_);
+    // y_liml_ = defvector(dim_y_);
 }
+
 Rbcar::Rbcar(
-    std::string state_subscriber_topic,
-    std::string desired_state_subscriber_topic,
-    std::string control_publish_topic,
     double max_speed = 1.0,
     double max_steering_angle = 0.8,
     double max_acceleration = 1.0,
-    double current_speed = 0.0,
-    double previous_speed = 0.0,
-    double control_period = 0.01,
-    double distance_offset = 0.5,
-    double theta_offset = 0.5,
+    // double current_speed = 0.0,
+    // double previous_speed = 0.0,
+    // double control_period = 0.01,
+    // double distance_offset = 0.5,
+    // double theta_offset = 0.5,
     double *init_x = NULL,
     double *init_xdes = NULL,
     double *init_u = NULL,
     double *init_udes = NULL,
     double *init_p = NULL,
     double *init_d = NULL,
+    // double *x_limu_ = NULL,
+    // double *u_limu_ = NULL,
+    // double *y_limu_ = NULL,
+    // double *x_liml_ = NULL,
+    // double *u_liml_ = NULL,
+    // double *y_liml_ = NULL,
     int id = 0) : Rbcar(id)
 {
     if (init_x != NULL)
@@ -121,9 +108,6 @@ Rbcar::Rbcar(
         this->setInitialParameter(init_p);
     };
     this->reset2initialstate();
-    this->setStateSubscriberRosTopicName(state_subscriber_topic);
-    this->setDesiredStateSubscriberRosTopicName(desired_state_subscriber_topic);
-    this->setPublisherRosTopicName(control_publish_topic);
 };
 
 /******************************************************** 

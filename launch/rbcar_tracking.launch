@@ -2,8 +2,10 @@
 <launch>
 
   <rosparam command="load" file="$(find denmpc)/launch/denmpc.yaml" />
+  <!-- 
+  <node name="scenario_rbcar_pose_tracking_node" pkg="denmpc" type="scenario_rbcar_pose_tracking_node" output="log"/> -->
 
-  <node name="scenario_rbcar_pose_tracking_node" pkg="denmpc" type="scenario_rbcar_pose_tracking_node" output="log"/>
+  <node name="scenario_mpc_node_node" pkg="denmpc" type="scenario_mpc_node_node" output="screen"/>
 
   <!-- <node name="path_listener" pkg="denmpc" type="path_listener.py" output="log"/> -->
 

@@ -55,12 +55,9 @@ SET( LIB_CONTROLLER_DIR  src/user_generated)
 set(LIB_CONTROLLER_SOURCES 
 	src/Agent.cpp 
 	src/Constraint.cpp
-	src/Coupling.cpp  
 	src/controller/Controller.cpp 
 	src/controller/Cmscgmres.cpp
 	src/MathLib.cpp 
-	src/Event.cpp
-	src/Scheduler.cpp 
 	)
 FILE( GLOB CONTROLLERSOURCES ${LIB_CONTROLLER_DIR}/*.cpp )
 FOREACH( SRC ${CONTROLLERSOURCES} )

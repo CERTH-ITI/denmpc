@@ -25,14 +25,14 @@
 	// Preprocessor Commands to turn of / on Debugging //
 	//=================================================//
 
-//#define TRACE_ON
-//#define RESET_DU
-//#define RESET_DX
-//#define DEBUG_CGMRES
-//#define CONTROLLER_INFO
-//#define CGMRES_INIT_INFO
-//#define STATE_INFO
-//#define DEBUG_CGMRES
+// #define TRACE_ON
+// #define RESET_DU
+// #define RESET_DX
+// #define DEBUG_CGMRES
+// #define CONTROLLER_INFO
+// #define CGMRES_INIT_INFO
+// #define STATE_INFO
+// #define DEBUG_CGMRES
 
 class Cmscgmres : public Controller{
 protected:
@@ -336,7 +336,7 @@ public:
 	 * @param _hdir
 	 * @return void
 	 */
-	Cmscgmres(std::vector<Agent*> _listofagents,int _id,
+	Cmscgmres(Agent* _agent,int _id,
 			int _kmax=10,double _thor=1, double _ht=0.1,
 			int _nhor=10,double _rtol= 1e-8,double _zeta=10,
 			double _alpha=2,double _hdir=0.001);

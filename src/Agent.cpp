@@ -40,11 +40,6 @@
 		MathLib::free(xdes_);
 		MathLib::free(udes_);
 		MathLib::free(ydes_);
-		ros_publishers_.clear();
-		ros_state_subscribers_.clear();
-		ros_desired_state_subscribers_.clear();
-		ros_desired_control_subscribers_.clear();
-		ros_parameter_subscribers_.clear();
 		constraint_.clear();
 	}
 
@@ -54,19 +49,6 @@ void Agent::addConstraint(Constraint* _constraint){
 void Agent::removeConstraint(Constraint* _constraint){
 	//check arrays for the constraint and remove them
 	constraint_.  erase(std::remove(constraint_.begin(),  constraint_.end(),  _constraint),constraint_.end());
-}
-
-void Agent::addCouplingAsAgent1(Coupling* _couplingconstraint){
-	_couplingconstraint->setAgent1(this);
-	coupling_.push_back(_couplingconstraint);
-}
-void Agent::addCouplingAsAgent2(Coupling* _couplingconstraint){
-	_couplingconstraint->setAgent2(this);
-	coupling_.push_back(_couplingconstraint);
-}
-void Agent::removeCoupling(Coupling* _couplingconstraint){
-	//check arrays for the constraint and remove them
-	coupling_.erase(std::remove(coupling_.begin(),  coupling_.end(),  _couplingconstraint),coupling_.end());
 }
 
 

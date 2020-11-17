@@ -1,12 +1,12 @@
-rbcar_pose_topic: current_pose
-rbcar_desiredpose_topic: next_goal
-rbcar_cmdvel_topic: denmpc/cmd_vel
+current_pose: current_pose
+desired_pose: next_goal
+cmd_vel/denmpc: denmpc/cmd_vel
 
 control_period: 0.1
 
-max_speed: 1.0
-max_steering_angle: 2.7
-max_acceleration: 10.0
+max_speed: 1.0 # m/s
+max_steering_angle: 2.7 # rad
+max_acceleration: 10.0 # m / s^2
 
 distance_offset: 0.1
 theta_offset: 0.2
