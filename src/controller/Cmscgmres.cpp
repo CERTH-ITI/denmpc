@@ -16,7 +16,7 @@
  *  and a security measures for infeasible cases.
  */
 
-#include "Cmscgmres.h"
+#include "denmpc/Cmscgmres.h"
 
 //Cmscgmres::Cmscgmres(
 //		int _id, /**< id_ of controlled Agent*/

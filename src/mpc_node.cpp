@@ -1,4 +1,4 @@
-#include "rbcar_pose_tracking.h"
+#include <denmpc/mpc_node.h>
 
 namespace denmpc
 {
@@ -7,6 +7,7 @@ namespace denmpc
         ros::param::get("/current_pose", _current_pose_topic);
         ros::param::get("/desired_pose", _desired_pose_topic);
         ros::param::get("/cmd_vel/denmpc", _cmd_vel_topic);
+        ros::param::get("/mpc_plan", _mpc_plan_topic);
         ros::param::get("/max_speed", _max_speed);
         ros::param::get("/max_steering_angle", _max_steering_angle);
         ros::param::get("/max_acceleration", _max_acceleration);
@@ -20,46 +21,37 @@ namespace denmpc
         _received_goal = 0;
         _initialized = 0;
 
+        _state = GOAL_NOT_RECEIVED;
+
         // First advertise, them subscribe
         _cmd_vel_pub = _nh.advertise<geometry_msgs::Twist>(_cmd_vel_topic.c_str(), 10);
+        _plan_pub = _nh.advertise<nav_msgs::Path>(_mpc_plan_topic.c_str(), 10);
 
         _goal_sub = _nh.subscribe<geometry_msgs::PoseStamped>(_desired_pose_topic.c_str(), 10, &MPCcontroller::goalCallback, this);
-
         _pose_sub = _nh.subscribe<geometry_msgs::PoseStamped>(_current_pose_topic.c_str(), 10, &MPCcontroller::poseCallback, this);
 
         // everything runs with the timer callback function
         _timer = _nh.createTimer(ros::Duration(_control_period), &MPCcontroller::timerCallback, this);
 
         initialize();
-        std::cout << "Initialized\n";
+        std::cout << "MPC node initialized successfully\n";
     }
 
     MPCcontroller::~MPCcontroller()
     {
+        delete _rbcar;
+        delete _controller;
     }
 
     void MPCcontroller::initialize()
     {
-        // if (!_received_pose)
-        // {
-        //     ROS_WARN("Did not receive pose, cannot continue\n");
-        //     return;
-        // }
-
         // Initialize Rbcar instance
         _rbcar = new Rbcar(0);
-        double rbcar0_init_p[] = {1.0, 1.0, 1.0, 1.0, 0.5};
-        // Initial desired pose
-        // double rbcar0_init_x[] = {0.0, 0.0, 0.0};
-        // double rbcar0_init_xdes[] = {0.0, 0.0, 0.0};
-        // _rbcar->setInitialState(rbcar0_init_x);
-        // _rbcar->setInitialDesiredState(rbcar0_init_xdes);
-        _rbcar->setInitialParameter(rbcar0_init_p);
-        _rbcar->setMaxConstraints(_max_speed, _max_steering_angle, _max_acceleration);
-        // _rbcar->setControlPeriod(_control_period);
-        // _rbcar->setOffset(_distance_offset, _theta_offset);
-
-        // _agent_list.push_back(_rbcar);
+        // rbcar state={x,y,yaw} input={uforward,urotate}
+        double rbcar_init_p[] = {1.0, 1.0, 1.0, //Q
+                                 1.0, 1.0};     // R
+        //Define penaltys of state Q and inputs R
+        _rbcar->setInitialParameter(rbcar_init_p);
 
         // Initialize controller instance
         _controller = new Cmscgmres(_rbcar, 0);
@@ -73,8 +65,6 @@ namespace denmpc
         // _controller->activateInfo_Controller();
         // _controller->startLogging2File();
         // _controller->activateInfo_ControllerStates();
-
-        // _controller_list.push_back(_controller);
 
         _controller->startAgents();
 
@@ -93,6 +83,15 @@ namespace denmpc
         // std::cout << "Pose callback\n";
         _current_pose = *msg;
         _received_pose = 1;
+
+        if (goalReached())
+        {
+            _state = GOAL_REACHED;
+        }
+        else
+        {
+            _state = GOAL_IN_PROGRESS;
+        }
     }
 
     void MPCcontroller::timerCallback(const ros::TimerEvent &event)
@@ -110,14 +109,25 @@ namespace denmpc
         _rbcar->stateCallback(_current_pose);
         _rbcar->desiredStateCallback(_desired_pose);
 
-        double *action;
+        if (goalReached())
+        {
+            std::cout << "Waiting for new goal to arrive .......\n";
+            std::vector<double> action = {0, 0};
+            publishVelocityCommand(action);
+            _state = GOAL_NOT_RECEIVED;
+            return;
+        }
+        ROS_INFO("Current position is : (%f, %f)\n", _current_pose.pose.position.x, _current_pose.pose.position.y);
+        ROS_INFO("Desired position is : (%f, %f)\n", _desired_pose.pose.position.x, _desired_pose.pose.position.y);
+
         _controller->getMeasurements();
         _controller->computeAction(ros::Time::now().toSec());
-        action = _controller->returnAction();
+        double *action = _controller->returnAction();
 
         publishVelocityCommand(action);
 
         // Publish trajectory
+        publishTrajectory(_controller->getX());
     }
 
     void MPCcontroller::publishVelocityCommand(double *cmd)
@@ -158,6 +168,89 @@ namespace denmpc
         _previous_speed = cmd_to_be_applied[0];
     }
 
+    void MPCcontroller::publishVelocityCommand(std::vector<double> cmd)
+    {
+        std::vector<double> cmd_to_be_applied = cmd;
+        // Clamp velocity
+        if (cmd[0] > _max_speed)
+            cmd_to_be_applied[0] = _max_speed;
+        else if (cmd[0] < -1.0 * _max_speed)
+            cmd_to_be_applied[0] = -1.0 * _max_speed;
+
+        // check acceleration limits
+        if (cmd_to_be_applied[0] > _previous_speed + _max_acceleration * _control_period)
+        {
+            cmd_to_be_applied[0] = _previous_speed + _max_acceleration * _control_period;
+        }
+        else if (cmd_to_be_applied[0] < _previous_speed - _max_acceleration * _control_period)
+        {
+            cmd_to_be_applied[0] = _previous_speed - _max_acceleration * _control_period;
+        }
+
+        if (cmd_to_be_applied[1] > _max_steering_angle)
+            cmd_to_be_applied[1] = _max_steering_angle;
+        else if (cmd_to_be_applied[1] < -1.0 * _max_steering_angle)
+            cmd_to_be_applied[1] = -1.0 * _max_steering_angle;
+
+        geometry_msgs::Twist msg;
+        msg.linear.x = cmd_to_be_applied[0];
+        msg.linear.y = 0;
+        msg.linear.z = 0;
+        msg.angular.x = 0;
+        msg.angular.y = 0;
+        msg.angular.z = cmd_to_be_applied[1];
+
+        std::cout << "Action to be applied " << cmd_to_be_applied[0] << " , " << cmd_to_be_applied[1] << std::endl;
+        _cmd_vel_pub.publish(msg);
+
+        _previous_speed = cmd_to_be_applied[0];
+    }
+
+    void MPCcontroller::publishTrajectory(double **x)
+    {
+        nav_msgs::Path mpc_plan;
+        mpc_plan.header.stamp = ros::Time::now();
+        mpc_plan.header.frame_id = "map";
+        for (int i = 0; i < 2 * _horizon_diskr; i += 2)
+        {
+            geometry_msgs::PoseStamped tmp;
+            tmp.pose.position.x = x[i][0];
+            tmp.pose.position.y = x[i][1];
+            tmp.pose.position.z = x[i][2];
+
+            // Convert orientation from RPY to quaternion
+            tf::Quaternion q;
+            q.setRPY(x[i + 1][0], x[i + 1][1], x[i + 1][2]); // rad
+            quaternionTFToMsg(q, tmp.pose.orientation);
+            mpc_plan.poses.push_back(tmp);
+        }
+
+        _plan_pub.publish(mpc_plan);
+    }
+
+    bool MPCcontroller::goalReached()
+    {
+        if (positionDiff(_current_pose, _desired_pose).x < _distance_offset && positionDiff(_current_pose, _desired_pose).y < _distance_offset && orientationDiff(_current_pose, _desired_pose) < _theta_offset)
+            return 1;
+
+        return 0;
+    }
+
+    geometry_msgs::Point MPCcontroller::positionDiff(geometry_msgs::PoseStamped a, geometry_msgs::PoseStamped b)
+    {
+        geometry_msgs::Point out;
+        out.x = abs(a.pose.position.x - b.pose.position.x);
+        out.y = abs(a.pose.position.y - b.pose.position.y);
+        out.z = abs(a.pose.position.z - b.pose.position.z);
+        return out;
+    }
+    double MPCcontroller::orientationDiff(geometry_msgs::PoseStamped a, geometry_msgs::PoseStamped b)
+    {
+        double yaw_a = tf::getYaw(a.pose.orientation);
+        double yaw_b = tf::getYaw(b.pose.orientation);
+        return (abs(yaw_a - yaw_b));
+    }
+
 } // namespace denmpc
 
 int main(int argc, char **argv)
@@ -172,21 +265,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
-/*
-
-    bool goalReached()
-    {
-        double *current_state, *desired_state;
-        current_state = defvector(dim_x_);
-        desired_state = defvector(dim_x_);
-
-        this->getState(current_state);
-        this->getDesiredState(desired_state);
-
-        if ((abs(current_state[0] - desired_state[0]) < distance_offset) && (abs(current_state[1] - desired_state[1]) < distance_offset) && (abs(current_state[2] - desired_state[2]) < theta_offset))
-            return 1;
-
-        return 0;
-    };
-*/

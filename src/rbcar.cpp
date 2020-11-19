@@ -8,7 +8,7 @@
  * @brief   Exported with Mathematica Code Generator by Jan Dentler
  */
 
-#include <rbcar.h>
+#include <denmpc/rbcar.h>
 
 /*******************************************************
  * Constructor                                         * 
@@ -29,14 +29,6 @@ Rbcar::Rbcar(int id) : Agent(id)
     dim_eq_ = 0;
     dim_ineq_ = 2;
 
-    max_speed = 1.0;
-    max_steering_angle = 0.8;
-    max_acceleration = 1.0;
-    // previous_speed = 0.0;
-    // control_period = 0.01;
-    // distance_offset = 0.5;
-    // theta_offset = 0.5;
-
     //Allocate vectors
     x_ = defvector(dim_x_);
     xdes_ = defvector(dim_xdes_);
@@ -55,36 +47,15 @@ Rbcar::Rbcar(int id) : Agent(id)
     ydes_init_ = defvector(dim_ydes_);
     d_init_ = defvector(dim_d_);
     p_init_ = defvector(dim_p_);
-
-    // x_limu_ = defvector(dim_x_);
-    // u_limu_ = defvector(dim_u_);
-    // y_limu_ = defvector(dim_y_);
-    // x_liml_ = defvector(dim_x_);
-    // u_liml_ = defvector(dim_u_);
-    // y_liml_ = defvector(dim_y_);
 }
 
 Rbcar::Rbcar(
-    double max_speed = 1.0,
-    double max_steering_angle = 0.8,
-    double max_acceleration = 1.0,
-    // double current_speed = 0.0,
-    // double previous_speed = 0.0,
-    // double control_period = 0.01,
-    // double distance_offset = 0.5,
-    // double theta_offset = 0.5,
     double *init_x = NULL,
     double *init_xdes = NULL,
     double *init_u = NULL,
     double *init_udes = NULL,
     double *init_p = NULL,
     double *init_d = NULL,
-    // double *x_limu_ = NULL,
-    // double *u_limu_ = NULL,
-    // double *y_limu_ = NULL,
-    // double *x_liml_ = NULL,
-    // double *u_liml_ = NULL,
-    // double *y_liml_ = NULL,
     int id = 0) : Rbcar(id)
 {
     if (init_x != NULL)
@@ -120,7 +91,7 @@ void Rbcar::f(double *out, double t, double *x, double *u, double *d, double *p)
 #endif
     out[0] = u[0] * cos(x[2]);
     out[1] = u[0] * sin(x[2]);
-    out[2] = u[1];
+    out[2] = u[1]; // tan??
 }
 void Rbcar::dfdxlambda(double *out, double t, double *x, double *u, double *d, double *p, double *lambda)
 {

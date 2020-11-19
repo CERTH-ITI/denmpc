@@ -13,7 +13,7 @@
  */
 
 
-#include "Constraint.h"
+#include "denmpc/Constraint.h"
 
 /**
  * Constraint implementation

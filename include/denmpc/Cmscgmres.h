@@ -445,6 +445,16 @@ public:
 		init();
 	}
 
+	//========================================//
+	//  GETTER METHODS FOR SOLVER PARAMETERS  //
+	//========================================//
+	/**-------------- return the states from start to goal --------------
+	 * @param void
+	 * @return double**
+	 */
+	double** getX(){
+		return X_;
+	}
 
 	//=======================//
 	//  VECTOR MANIPULATION  //

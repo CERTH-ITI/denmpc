@@ -8,6 +8,8 @@
     @license GPLv3
     @brief   README
 
+## Modified version 
+
 ## Outline
 DENMPC is providing an object-oriented real-time nonlinear model predictive control (NMPC) framework which has been developed at the Automation & Robotics Research Group http://wwwde.uni.lu/snt/research/automation_robotics_research_group at the University of Luxembourg. 
 

@@ -1,6 +1,7 @@
 current_pose: current_pose
-desired_pose: next_goal
+desired_pose: goal
 cmd_vel/denmpc: denmpc/cmd_vel
+mpc_plan: denmpc/local_plan
 
 control_period: 0.1
 
@@ -11,5 +12,5 @@ max_acceleration: 10.0 # m / s^2
 distance_offset: 0.1
 theta_offset: 0.2
 
-horizon_diskretization: 10.0
+horizon_diskretization: 10
 horizon_length: 10.0

@@ -14,7 +14,7 @@
  * MathLib contains elemental vector operations
  */
 
-#include <MathLib.h>
+#include <denmpc/MathLib.h>
 
 /*---- print array ----*/
 void MathLib::mprint(std::ostream& ss, unsigned nstate, double *a, const char* name)

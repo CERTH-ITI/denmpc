@@ -19,7 +19,7 @@
  *	where the inequality is transformed into stage cost with the help of a logarithmic barrier function.
  */
 
-#include "Controller.h"
+#include "denmpc/Controller.h"
 
 void Controller::startAgents()
 {
