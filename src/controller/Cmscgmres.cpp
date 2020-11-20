@@ -44,7 +44,7 @@ Cmscgmres::Cmscgmres(Agent *_agent, int _id,
 	printf(" %s Constructor called\n", type_.c_str());
 	//Initialize flags
 	flag_memoryalreadyallocated_ = false;
-	
+
 	//Constants
 	nhor_ = _nhor;	 /*standard =10*/
 	alpha_ = _alpha; /*standard =2*/
@@ -136,27 +136,27 @@ void Cmscgmres::init()
 	printf(" hdir:%f,", hdir_);
 	printf("Cmscgmres VectorDim|");
 	printf(" concatenated states:%u,", dim_x_conc_);
-	printf(" concatenated outputs:%u,", u_conc_dim);
-	printf(" concatenated equality constraints:%u,", eqcon_conc_dim);
-	printf(" concatenated inequality constraints:%u,", ineqcon_conc_dim);
-	printf(" concatenated parameter vector:%u\n", p_conc_dim);
+	printf(" concatenated outputs:%u,", dim_u_conc_);
+	printf(" concatenated equality constraints:%u,", dim_eqcon_conc_);
+	printf(" concatenated inequality constraints:%u,", dim_ineqcon_conc_);
+	printf(" concatenated parameter vector:%u\n", dim_p_conc_);
 	printf(" optvar_conc_dim_:%u,", dim_optvar_conc_);
 	printf(" x_conc_dim:%u,", dim_x_conc_);
 	printf(" dimf:%u,", dim_f_);
 	printf(" dimg:%u\n", dim_g_);
 	//Init Cmscgmres
-	MathLib::mprint(log_stringstream_, dim_optvar_conc_, u0, "u0");
-	MathLib::mprint(log_stringstream_, dim_x_conc_, x0, "x0");
-	MathLib::mprint(log_stringstream_, xdes_conc_dim, xdes_conc, "xdes");
-	MathLib::mprint(log_stringstream_, udes_conc_dim, udes_conc, "udes");
+	MathLib::mprint(log_stringstream_, dim_optvar_conc_, u0_, "u0");
+	MathLib::mprint(log_stringstream_, dim_x_conc_, x0_, "x0");
+	MathLib::mprint(log_stringstream_, dim_xdes_conc_, xdes_conc_, "xdes");
+	MathLib::mprint(log_stringstream_, dim_udes_conc_, udes_conc_, "udes");
 #endif
 	getOptimalInitialValues(x_conc_, u_conc_);
 #ifdef CGMRES_INIT_INFO
 	printf(" AFTER MSCGMRES initialization phase\n");
-	MathLib::mprint(log_stringstream_, dim_optvar_conc_, u_conc, "u_conc");
-	MathLib::mprint(log_stringstream_, dim_x_conc_, x_conc, "x_conc");
-	MathLib::mprint(log_stringstream_, xdes_conc_dim, xdes_conc, "xdes");
-	MathLib::mprint(log_stringstream_, udes_conc_dim, udes_conc, "udes");
+	MathLib::mprint(log_stringstream_, dim_optvar_conc_, u_conc_, "u_conc");
+	MathLib::mprint(log_stringstream_, dim_x_conc_, x_conc_, "x_conc");
+	MathLib::mprint(log_stringstream_, dim_xdes_conc_, xdes_conc_, "xdes");
+	MathLib::mprint(log_stringstream_, dim_udes_conc_, udes_conc_, "udes");
 #endif
 }
 
@@ -358,17 +358,19 @@ void Cmscgmres::unew(double t, double x[], double x1[], double u[])
 		printf("  <G,G>= %f\n", mvinner(dim_g_, G_[0], G_[0]));
 	}
 
-	//	if(flag_show_controllertrace_){
-	//	printf("isim=%d, t=%g \n", controlcounter_, (float)t);
-	//	printf("taut=%10g, x0=%10g,                u0=%10g \n",
-	//			(float)tau_[0], (float)x[0], (float)U_[0][0]);
-	//	for(i=0; i<nhor_-1; i++){
-	//		printf("taut=%10g, x0=%10g, l0=%10g, u0=%10g \n",
-	//				(float)tau_[i+1], (float)X_[2*i][0], (float)X_[2*i+1][0], (float)U_[i+1][0], (float)F[i][0]);
-	//	}
-	//	printf("taut=%10g, x0=%10g, l0=%10g \n",
-	//			(float)tau_[nhor_], (float)X_[2*nhor_-2][0], (float)X_[2*nhor_-1][0]);
-	//}
+	if (flag_show_controllertrace_)
+	{
+		printf("isim=%d, t=%g \n", controlcounter_, (float)t);
+		printf("taut=%10g, x0=%10g,                u0=%10g \n",
+			   (float)tau_[0], (float)x[0], (float)U_[0][0]);
+		for (i = 0; i < nhor_ - 1; i++)
+		{
+			printf("taut=%10g, x0=%10g, l0=%10g, u0=%10g, f0=%10g  \n",
+				   (float)tau_[i + 1], (float)X_[2 * i][0], (float)X_[2 * i + 1][0], (float)U_[i + 1][0], (float)F_[i][0]);
+		}
+		printf("taut=%10g, x0=%10g, l0=%10g \n",
+			   (float)tau_[nhor_], (float)X_[2 * nhor_ - 2][0], (float)X_[2 * nhor_ - 1][0]);
+	}
 
 	nfgmres(&Cmscgmres::adufunc, dim_f_, bvec_, duvec_, kmax_, errvec_);
 
@@ -468,15 +470,16 @@ void Cmscgmres::nfgmres(funcptr_cgmresfunc axfunc, unsigned n, double *b,
 
 	if (flag_show_controllerinfo_)
 	{
-		printf("  Rho  =%f\n", rho);
+		printf("  Rho  = %f\n", rho);
 	}
 
 	//If rho=0. Given Control is optimal -> Do nothing
 	if (rho != 0)
 	{
-
+		std::cout << "rho different than 0!!\n";
 		if (std::isnan(rho))
 		{
+			std::cout << "rho is NAN!!\n";
 			rho = 1 / rtol_;
 			if (flag_show_controllerinfo_)
 			{
@@ -485,9 +488,10 @@ void Cmscgmres::nfgmres(funcptr_cgmresfunc axfunc, unsigned n, double *b,
 		}
 
 		mdivsc(1, n, tmpvec, rho, vmat[0]);
-
+		std::cout << "kmax : " << kmax << " rtol : " << rtol_ << std::endl;
 		for (k = 0; ((k < kmax) && (rho > rtol_)); k++)
 		{
+			std::cout << "k : " << k << " rho : " << rho << std::endl;
 			(this->*axfunc)(n, vmat[k], vmat[k + 1]);
 			normv_unorth = sqrt(mvinner(n, vmat[k + 1], vmat[k + 1]));
 			/* Modified Gram-Schmidt */
@@ -606,7 +610,7 @@ void Cmscgmres::getOptimalInitialValues(double *x, double *u)
 {
 	//Initialize Vector values
 	initVectors();
-	
+
 	int i, j;
 	double r, b[dim_optvar_conc_], du0[dim_optvar_conc_], erru0[dim_optvar_conc_ + 1];
 	lmd0_ = defvector(dim_x_conc_);

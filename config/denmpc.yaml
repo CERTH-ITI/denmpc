@@ -13,4 +13,4 @@ distance_offset: 0.1
 theta_offset: 0.2
 
 horizon_diskretization: 10
-horizon_length: 10.0
+horizon_length: 0.5

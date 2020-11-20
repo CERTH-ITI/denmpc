@@ -160,7 +160,7 @@ public:
 	void initConcatenation();
 	//	//get initial values and set them to the arrays
 	//	void initArrayValues();
-	//Get Measurments from Agents
+	//Get Measurements from Agents
 	void getMeasurements();
 	//Compute action
 	virtual void computeAction(double _time) { std::cout << "void Controller::computeAction()" << std::endl; };

@@ -1,4 +1,4 @@
-#include <denmpc/mpc_node.h>
+#include "denmpc/mpc_node.h"
 
 namespace denmpc
 {
@@ -27,8 +27,8 @@ namespace denmpc
         _cmd_vel_pub = _nh.advertise<geometry_msgs::Twist>(_cmd_vel_topic.c_str(), 10);
         _plan_pub = _nh.advertise<nav_msgs::Path>(_mpc_plan_topic.c_str(), 10);
 
-        _goal_sub = _nh.subscribe<geometry_msgs::PoseStamped>(_desired_pose_topic.c_str(), 10, &MPCcontroller::goalCallback, this);
-        _pose_sub = _nh.subscribe<geometry_msgs::PoseStamped>(_current_pose_topic.c_str(), 10, &MPCcontroller::poseCallback, this);
+        _goal_sub = _nh.subscribe<geometry_msgs::PoseStamped>(_desired_pose_topic.c_str(), 1, &MPCcontroller::goalCallback, this);
+        _pose_sub = _nh.subscribe<geometry_msgs::PoseStamped>(_current_pose_topic.c_str(), 1, &MPCcontroller::poseCallback, this);
 
         // everything runs with the timer callback function
         _timer = _nh.createTimer(ros::Duration(_control_period), &MPCcontroller::timerCallback, this);
@@ -48,8 +48,8 @@ namespace denmpc
         // Initialize Rbcar instance
         _rbcar = new Rbcar(0);
         // rbcar state={x,y,yaw} input={uforward,urotate}
-        double rbcar_init_p[] = {1.0, 1.0, 1.0, //Q
-                                 1.0, 1.0};     // R
+        double rbcar_init_p[] = {1.0, 1.0, 0.0, //Q // TODO search more about these params, how to they affect
+                                 1.0, 0.5};     // R
         //Define penaltys of state Q and inputs R
         _rbcar->setInitialParameter(rbcar_init_p);
 
@@ -62,7 +62,7 @@ namespace denmpc
         _controller->setMaximumNumberofIterations(10);
 
         // _controller->activateInfo_ControllerTrace();
-        // _controller->activateInfo_Controller();
+        _controller->activateInfo_Controller();
         // _controller->startLogging2File();
         // _controller->activateInfo_ControllerStates();
 
@@ -76,6 +76,7 @@ namespace denmpc
         // std::cout << "Goal callback\n";
         _desired_pose = *msg;
         _received_goal = 1;
+        _state = GOAL_IN_PROGRESS;
     }
 
     void MPCcontroller::poseCallback(const geometry_msgs::PoseStampedConstPtr &msg)
@@ -87,10 +88,6 @@ namespace denmpc
         if (goalReached())
         {
             _state = GOAL_REACHED;
-        }
-        else
-        {
-            _state = GOAL_IN_PROGRESS;
         }
     }
 
@@ -117,8 +114,9 @@ namespace denmpc
             _state = GOAL_NOT_RECEIVED;
             return;
         }
-        ROS_INFO("Current position is : (%f, %f)\n", _current_pose.pose.position.x, _current_pose.pose.position.y);
-        ROS_INFO("Desired position is : (%f, %f)\n", _desired_pose.pose.position.x, _desired_pose.pose.position.y);
+
+        ROS_INFO("Current position is : (%f, %f, %f)\n", _current_pose.pose.position.x, _current_pose.pose.position.y, _current_pose.pose.position.z);
+        ROS_INFO("Desired position is : (%f, %f, %f)\n", _desired_pose.pose.position.x, _desired_pose.pose.position.y, _desired_pose.pose.position.z);
 
         _controller->getMeasurements();
         _controller->computeAction(ros::Time::now().toSec());
@@ -220,8 +218,8 @@ namespace denmpc
 
             // Convert orientation from RPY to quaternion
             tf::Quaternion q;
-            q.setRPY(x[i + 1][0], x[i + 1][1], x[i + 1][2]); // rad
-            quaternionTFToMsg(q, tmp.pose.orientation);
+            q.setRPY(x[i + 1][0] * M_PI / 180, x[i + 1][1] * M_PI / 180, x[i + 1][2] * M_PI / 180); // rad
+            quaternionTFToMsg(q.normalize(), tmp.pose.orientation);
             mpc_plan.poses.push_back(tmp);
         }
 
@@ -244,6 +242,7 @@ namespace denmpc
         out.z = abs(a.pose.position.z - b.pose.position.z);
         return out;
     }
+
     double MPCcontroller::orientationDiff(geometry_msgs::PoseStamped a, geometry_msgs::PoseStamped b)
     {
         double yaw_a = tf::getYaw(a.pose.orientation);

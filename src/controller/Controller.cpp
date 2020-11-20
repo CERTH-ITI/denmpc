@@ -111,8 +111,9 @@ Controller::Controller(Agent *_agent, int _id = 0)
 	log_filename_ = filename.str();
 
 	constrainthandlingmethod_ = METHOD_PRIMALBARRIER;
-	//	constrainthandlingmethod_=METHOD_EXTERIORPENALTY;
-	//	constrainthandlingmethod_=METHOD_AUXILIARYVARIABLE;
+	// constrainthandlingmethod_=METHOD_EXTERIORPENALTY;
+	// constrainthandlingmethod_ = METHOD_AUXILIARYVARIABLE;
+	// constrainthandlingmethod_ = METHOD_ACTIVESET;
 
 	//Set Agent states to initial values
 	agent_->reset2initialstate();
